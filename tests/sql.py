@@ -1617,6 +1617,20 @@ class TestSelectFeatures(BaseTestCase):
             'FILTER (WHERE ("t1"."dob" < ?)) '
             'FROM "person" AS "t1"'), [datetime.date(2000, 1, 1)])
 
+    def test_order_by_aggregate(self):
+        agg = fn.array_agg(Person.name).order_by(Person.id.desc())
+        query = Person.select(fn.array_agg(Person.name), agg)
+        self.assertSQL(query, (
+            'SELECT array_agg("t1"."name"), '
+            'array_agg("t1"."name" ORDER BY "t1"."id" DESC) '
+            'FROM "person" AS "t1"'), [])
+
+        agg = fn.array_agg(Person.name).order_by(Person.name.desc(), Person.id)
+        self.assertSQL(Person.select(agg.alias('names')), (
+            'SELECT array_agg('
+            '"t1"."name" ORDER BY "t1"."name" DESC, "t1"."id") AS "names" '
+            'FROM "person" AS "t1"'), [])
+
     def test_for_update(self):
         query = (Person
                  .select()

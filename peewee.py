@@ -1483,6 +1483,7 @@ class Function(ColumnBase):
         self.name = name
         self.arguments = arguments
         self._filter = None
+        self._order_by = None
         self._python_value = python_value
         if name and name.lower() in ('sum', 'count', 'cast'):
             self._coerce = False
@@ -1497,6 +1498,10 @@ class Function(ColumnBase):
     @Node.copy
     def filter(self, where=None):
         self._filter = where
+
+    @Node.copy
+    def order_by(self, *nodes):
+        self._order_by = nodes
 
     @Node.copy
     def python_value(self, func=None):
@@ -1520,11 +1525,16 @@ class Function(ColumnBase):
         if not len(self.arguments):
             ctx.literal('()')
         else:
-            with ctx(in_function=True, function_arg_count=len(self.arguments)):
-                ctx.sql(EnclosedNodeList([
+            with ctx(in_function=True, function_arg_count=len(self.arguments),
+                     parentheses=True):
+                ctx.sql(CommaNodeList([
                     (argument if isinstance(argument, Node)
                      else Value(argument, False))
                     for argument in self.arguments]))
+
+                if self._order_by:
+                    ctx.literal(' ORDER BY ')
+                    ctx.sql(CommaNodeList(self._order_by))
 
         if self._filter:
             ctx.literal(' FILTER (WHERE ').sql(self._filter).literal(')')
