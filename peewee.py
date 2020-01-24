@@ -1525,6 +1525,13 @@ class Function(ColumnBase):
         if not len(self.arguments):
             ctx.literal('()')
         else:
+            # This code is roughly the same as that of NodeList, which modifies
+            # the child-expression to avoid double-parentheses.
+            if len(self.arguments) == 1 and \
+               isinstance(self.arguments[0], Expression):
+                # Hack to avoid double-parentheses.
+                self.arguments[0].flat = True
+
             with ctx(in_function=True, function_arg_count=len(self.arguments),
                      parentheses=True):
                 ctx.sql(CommaNodeList([
