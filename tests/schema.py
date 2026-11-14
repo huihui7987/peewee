@@ -9,12 +9,14 @@ from peewee import NodeList
 
 from .base import BaseTestCase
 from .base import IS_CRDB
+from .base import IS_MYSQL
 from .base import IS_SQLITE
 from .base import ModelDatabaseTestCase
 from .base import ModelTestCase
 from .base import TestModel
 from .base import get_in_memory_db
 from .base import requires_postgresql
+from .base import skip_if
 from .base_models import Category
 from .base_models import Note
 from .base_models import Person
@@ -1290,6 +1292,26 @@ class TestNamedConstraintsIntegration(ModelTestCase):
                     TMNamedConstraints.create(**f)
 
         self.assertEqual(len(TMNamedConstraints), 1)
+
+
+class TMPartial(TestModel):
+    key = TextField()
+    active = BooleanField()
+
+TMPartial.add_index(TMPartial.index(TMPartial.key, unique=True,
+                                    where=(TMPartial.active == True)))
+
+
+@skip_if(IS_MYSQL, 'requires partial-index support')
+class TestPartialIndexIntegration(ModelTestCase):
+    requires = [TMPartial]
+
+    def test_partial_index_bool(self):
+        TMPartial.create(key='k1', active=False)
+        TMPartial.create(key='k1', active=True)
+        with self.assertRaises(IntegrityError):
+            with self.database.atomic():
+                TMPartial.create(key='k1', active=True)
 
 
 # ===========================================================================

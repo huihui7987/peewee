@@ -19,7 +19,6 @@ from .base import DatabaseTestCase
 from .base import IS_CRDB
 from .base import IS_MYSQL
 from .base import IS_POSTGRESQL
-from .base import IS_PSYCOPG3
 from .base import IS_SQLITE
 from .base import IS_SQLITE_35
 from .base import IS_SQLITE_53
@@ -386,7 +385,6 @@ class TestSchemaMigration(ModelTestCase):
     def test_rename_gh380_sqlite_legacy(self):
         self.test_rename_gh380(legacy=True)
 
-    @skip_if(IS_PSYCOPG3, 'Psycopg3 chokes on the default value.')
     @skip_if(IS_MYSQL_CONNECTOR, 'mysql-connector forces strict sql_mode')
     def test_add_default_drop_default(self):
         with self.database.transaction():

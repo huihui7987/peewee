@@ -782,8 +782,10 @@ def _query_val_transform(v):
         except UnicodeDecodeError:
             v = v.decode('raw_unicode_escape')
         v = "'%s'" % v.replace("'", "''")
+    elif isinstance(v, bool):
+        v = 'TRUE' if v else 'FALSE'  # Postgres rejects bool = 1.
     elif isinstance(v, int):
-        v = '%s' % int(v)  # Also handles booleans -> 1 or 0.
+        v = '%s' % int(v)
     elif v is None:
         v = 'NULL'
     else:

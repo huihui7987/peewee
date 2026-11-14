@@ -445,6 +445,9 @@ class SchemaMigrator(object):
         # bound value.
         if isinstance(default, str) and default.endswith((')', "'")):
             default = SQL(default)
+        elif self.database.index_value_literals:
+            # psycopg3 binds server-side, which DDL does not accept.
+            default = ValueLiterals(default)
 
         return (self
                 ._alter_table(self.make_context(), table)
